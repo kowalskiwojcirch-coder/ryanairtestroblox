@@ -39,7 +39,7 @@
         button, span, p { text-transform: none !important; }
 
         .airline-logo {
-            height: 20px;
+            height: 18px;
             width: auto;
             filter: brightness(0) invert(1);
             opacity: 0.8;
@@ -69,10 +69,8 @@
         <div id="flights-container" class="w-full flex flex-col items-center gap-4"></div>
     </div>
 
-    <!-- Panel Modalny -->
     <div id="modal-overlay" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
         
-        <!-- Login Box - Kompaktowy rozmiar -->
         <div id="login-box" class="hidden bg-[#0C3895] border border-white/10 p-8 rounded-[32px] w-full max-w-[320px] text-center shadow-2xl">
             <h2 class="text-xl font-medium mb-6">Administrator</h2>
             <input type="password" id="admin-pass" placeholder="Password" class="w-full mb-4 text-center">
@@ -80,7 +78,6 @@
             <button onclick="closeModal()" class="mt-4 text-white/40 text-sm hover:text-white transition">Zamknij</button>
         </div>
 
-        <!-- Panel Zarządzania -->
         <div id="admin-box" class="hidden bg-[#0C3895] border border-white/10 p-8 rounded-[32px] w-full max-w-2xl overflow-y-auto max-h-[90vh]">
             <div class="flex justify-between items-center mb-6">
                 <h2 id="form-title" class="text-xl font-medium">Zarządzanie lotami</h2>
@@ -167,22 +164,23 @@
 
                 return `
                 <div class="flight-card w-full p-6 relative ${isFlying ? 'is-flying' : ''}">
-                    <div class="absolute top-6 right-32 flex items-center gap-3">
-                        ${isFlying ? '<span class="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-full"><span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>Flying Now</span>' : ''}
-                    </div>
-
-                    <div class="absolute top-6 right-8">
-                        <img src="${logoUrl}" class="airline-logo" alt="${f.operator}">
-                    </div>
-                    
                     <div class="flex justify-between items-start mb-6">
-                        <div>
-                            <h2 class="text-3xl font-semibold mb-0.5 tracking-tight">${f.number}</h2>
+                        <!-- Lewa strona: Numer lotu, Dzień i Logo -->
+                        <div class="flex flex-col gap-1">
+                            <div class="flex items-center gap-3">
+                                <h2 class="text-3xl font-semibold tracking-tight leading-none">${f.number}</h2>
+                                <img src="${logoUrl}" class="airline-logo" alt="${f.operator}">
+                            </div>
                             <p class="text-white/40 text-[13px] font-light">${f.day}</p>
                         </div>
-                        <div class="text-right">
-                            <h3 class="text-[22px] font-medium">${f.dep} BST</h3>
-                            <p class="text-white/30 text-[10px] font-light mt-0.5 tracking-wider">${f.dur}</p>
+
+                        <!-- Prawa strona: Status i Godzina -->
+                        <div class="flex flex-col items-end gap-2">
+                            ${isFlying ? '<span class="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-full whitespace-nowrap"><span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>Flying Now</span>' : ''}
+                            <div class="text-right">
+                                <h3 class="text-[22px] font-medium leading-none">${f.dep} BST</h3>
+                                <p class="text-white/30 text-[10px] font-light mt-1 tracking-wider">${f.dur}</p>
+                            </div>
                         </div>
                     </div>
 
@@ -214,7 +212,6 @@
             document.getElementById('login-box').classList.remove('hidden');
         }
 
-        // ZAKTUALIZOWANE HASŁO
         function checkLogin() {
             if(document.getElementById('admin-pass').value === 'Ryanairrobloxpolska2026') {
                 document.getElementById('login-box').classList.add('hidden');
