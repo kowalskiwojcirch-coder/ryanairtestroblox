@@ -72,7 +72,7 @@
     <!-- Panel Modalny -->
     <div id="modal-overlay" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
         
-        <!-- Login - POPRAWIONY ROZMIAR -->
+        <!-- Login Box - Kompaktowy rozmiar -->
         <div id="login-box" class="hidden bg-[#0C3895] border border-white/10 p-8 rounded-[32px] w-full max-w-[320px] text-center shadow-2xl">
             <h2 class="text-xl font-medium mb-6">Administrator</h2>
             <input type="password" id="admin-pass" placeholder="Password" class="w-full mb-4 text-center">
@@ -214,12 +214,13 @@
             document.getElementById('login-box').classList.remove('hidden');
         }
 
+        // ZAKTUALIZOWANE HASŁO
         function checkLogin() {
-            if(document.getElementById('admin-pass').value === 'admin123') {
+            if(document.getElementById('admin-pass').value === 'Ryanairrobloxpolska2026') {
                 document.getElementById('login-box').classList.add('hidden');
                 document.getElementById('admin-box').classList.remove('hidden');
                 renderFlights();
-            } else { alert("Wrong password"); }
+            } else { alert("Nieprawidłowe hasło!"); }
         }
 
         function closeModal() {
