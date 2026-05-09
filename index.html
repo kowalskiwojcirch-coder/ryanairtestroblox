@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ryanair Roblox System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+        body { font-family: 'Inter', sans-serif; background-color: #0038a8; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function RyanairSystem() {
+            const ADMIN_PASSWORD = "admin123";
+            const [page, setPage] = useState("flights");
+            const [flights, setFlights] = useState([]);
+            const [logged, setLogged] = useState(false);
+            const [password, setPassword] = useState("");
+            const [selectedDay, setSelectedDay] = useState("Wszystkie dni");
+
+            const airlineLogos = {
+                Ryanair: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Ryanair_logo.svg/512px-Ryanair_logo.svg.png",
+                Buzz: "https://seeklogo.com/images/B/buzz-logo-7A61D4C523-seeklogo.com.png",
+                Malta: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Malta_Air_logo.svg/512px-Malta_Air_logo.svg.png",
+            };
+
+            const days = ["Wszystkie dni", "Niedziela", "Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota"];
+
+            useEffect(() => {
+                const saved = localStorage.getItem("ryanair-data");
+                if (saved) setFlights(JSON.parse(saved));
+                else setFlights([
+                    { id: 1, number: "FR7933", day: "Sobota", from: "Kraków", to: "Podgorica", departure: "15:35", arrival: "16:45", airline: "Buzz", active: true }
+                ]);
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem("ryanair-data", JSON.stringify(flights));
+            }, [flights]);
+
+            const addFlight = (e) => {
+                e.preventDefault();
+                const fd = new FormData(e.target);
+                const newF = {
+                    id: Date.now(),
+                    number: fd.get("number"),
+                    day: fd.get("day"),
+                    from: fd.get("from"),
+                    to: fd.get("to"),
+                    departure: fd.get("dep"),
+                    arrival: fd.get("arr"),
+                    airline: fd.get("airline"),
+                    active: false
+                };
+                setFlights([...flights, newF]);
+                e.target.reset();
+            };
+
+            const filtered = selectedDay === "Wszystkie dni" ? flights : flights.filter(f => f.day === selectedDay);
+
+            return (
+                <div className="min-h-screen text-white p-4 md:p-10">
+                    <div className="max-w-4xl mx-auto">
+                        <header className="flex justify-between items-center mb-10 border-b border-blue-400 pb-5">
+                            <h1 className="text-3xl font-black italic">RYANAIR</h1>
+                            <nav className="flex gap-2">
+                                <button onClick={() => setPage("flights")} className={`px-4 py-2 rounded ${page === 'flights' ? 'bg-white text-blue-800' : 'bg-blue-700'}`}>LOTY</button>
+                                <button onClick={() => setPage("admin")} className={`px-4 py-2 rounded ${page === 'admin' ? 'bg-white text-blue-800' : 'bg-blue-700'}`}>ADMIN</button>
+                            </nav>
+                        </header>
+
+                        {page === "flights" ? (
+                            <section>
+                                <div className="flex flex-wrap gap-2 mb-8 justify-center">
+                                    {days.map(d => (
+                                        <button key={d} onClick={() => setSelectedDay(d)} className={`px-3 py-1 rounded-full text-sm ${selectedDay === d ? 'bg-yellow-400 text-black' : 'bg-blue-800'}`}>{d}</button>
+                                    ))}
+                                </div>
+                                <div className="grid gap-4">
+                                    {filtered.map(f => (
+                                        <div key={f.id} className={`p-6 rounded-xl border-2 ${f.active ? 'border-green-400 bg-blue-600' : 'border-blue-400 bg-blue-900'}`}>
+                                            <div className="flex justify-between items-center">
+                                                <div>
+                                                    <div className="text-2xl font-black">{f.number}</div>
+                                                    <div className="text-sm opacity-70">{f.from} → {f.to}</div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-xl font-bold">{f.departure}</div>
+                                                    <div className="text-xs opacity-60 uppercase">{f.day}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </section>
+                        ) : (
+                            <section className="max-w-md mx-auto">
+                                {!logged ? (
+                                    <div className="bg-blue-900 p-6 rounded-xl border border-blue-400">
+                                        <input type="password" placeholder="Hasło" className="w-full p-2 mb-4 bg-blue-950 border border-blue-400 rounded" onChange={e => setPassword(e.target.value)} />
+                                        <button onClick={() => password === ADMIN_PASSWORD ? setLogged(true) : alert("Złe hasło")} className="w-full bg-yellow-400 text-black font-bold py-2 rounded">ZALOGUJ</button>
+                                    </div>
+                                ) : (
+                                    <form onSubmit={addFlight} className="bg-blue-900 p-6 rounded-xl border border-blue-400 space-y-3">
+                                        <input name="number" placeholder="Numer lotu" className="w-full p-2 bg-blue-950 rounded border border-blue-700" required />
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <input name="from" placeholder="Z" className="p-2 bg-blue-950 rounded border border-blue-700" required />
+                                            <input name="to" placeholder="Do" className="p-2 bg-blue-950 rounded border border-blue-700" required />
+                                            <input name="dep" type="time" className="p-2 bg-blue-950 rounded border border-blue-700" required />
+                                            <input name="arr" type="time" className="p-2 bg-blue-950 rounded border border-blue-700" required />
+                                        </div>
+                                        <select name="day" className="w-full p-2 bg-blue-950 rounded border border-blue-700">
+                                            {days.slice(1).map(d => <option key={d}>{d}</option>)}
+                                        </select>
+                                        <select name="airline" className="w-full p-2 bg-blue-950 rounded border border-blue-700">
+                                            <option>Ryanair</option><option>Buzz</option><option>Malta</option>
+                                        </select>
+                                        <button type="submit" className="w-full bg-green-500 py-2 rounded font-bold uppercase">Dodaj lot</button>
+                                        <div className="mt-4 border-t border-blue-700 pt-4">
+                                            {flights.map(f => (
+                                                <div key={f.id} className="flex justify-between text-xs mb-2">
+                                                    <span>{f.number}</span>
+                                                    <button type="button" onClick={() => setFlights(flights.filter(x => x.id !== f.id))} className="text-red-400">Usuń</button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </form>
+                                )}
+                            </section>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<RyanairSystem />);
+    </script>
+</body>
+</html>
