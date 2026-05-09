@@ -1,147 +1,304 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ryanair Roblox System</title>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ryanair Flights</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@200;300;400;600&display=swap" rel="stylesheet">
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
-        body { font-family: 'Inter', sans-serif; background-color: #0038a8; }
+        body { 
+            font-family: 'Outfit', sans-serif; 
+            background-color: #0C3895; 
+            color: white; 
+            -webkit-font-smoothing: antialiased;
+        }
+        .filter-btn { 
+            background-color: rgba(255, 255, 255, 0.08); 
+            transition: all 0.2s ease;
+            font-weight: 300;
+        }
+        .filter-btn.active { background-color: rgba(255, 255, 255, 0.2); }
+        .flight-card { 
+            background-color: rgba(255, 255, 255, 0.04); 
+            border: 1px solid rgba(255, 255, 255, 0.08); 
+            border-radius: 24px;
+            max-width: 800px;
+        }
+        .is-flying { border: 1px solid #10b981; box-shadow: 0 0 15px rgba(16, 185, 129, 0.1); }
+        
+        input, select { 
+            background: rgba(0, 0, 0, 0.2) !important; 
+            border: 1px solid rgba(255, 255, 255, 0.1) !important; 
+            color: white !important; 
+            padding: 10px; 
+            border-radius: 12px; 
+            outline: none; 
+            font-weight: 300;
+        }
+        button, span, p { text-transform: none !important; }
+
+        .airline-logo {
+            height: 20px;
+            width: auto;
+            filter: brightness(0) invert(1);
+            opacity: 0.8;
+        }
     </style>
 </head>
 <body>
-    <div id="root"></div>
-    <script type="text/babel">
-        const { useState, useEffect } = React;
+    <div class="min-h-screen py-12 px-6 flex flex-col items-center">
+        
+        <img src="https://upload.wikimedia.org/wikipedia/en/thumb/a/ae/Ryanair_Logo.svg/1200px-Ryanair_Logo.svg.png" 
+             onclick="openLogin()" class="h-16 mb-8 cursor-pointer opacity-90 hover:opacity-100 transition" alt="Ryanair">
+        
+        <h1 class="text-4xl font-semibold mb-3 tracking-tight">Ryanair Flights</h1>
+        
+        <p class="text-center text-white/70 max-w-md text-[14px] font-light mb-8 leading-relaxed">
+            View all scheduled flights for the week. To check detailed status information of a flight please join our <span class="underline">Discord Server</span> and check the #travel-assistant channel.
+        </p>
 
-        function RyanairSystem() {
-            const ADMIN_PASSWORD = "admin123";
-            const [page, setPage] = useState("flights");
-            const [flights, setFlights] = useState([]);
-            const [logged, setLogged] = useState(false);
-            const [password, setPassword] = useState("");
-            const [selectedDay, setSelectedDay] = useState("Wszystkie dni");
+        <div id="day-filters" class="flex flex-wrap justify-center gap-2 mb-8"></div>
 
-            const airlineLogos = {
-                Ryanair: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Ryanair_logo.svg/512px-Ryanair_logo.svg.png",
-                Buzz: "https://seeklogo.com/images/B/buzz-logo-7A61D4C523-seeklogo.com.png",
-                Malta: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Malta_Air_logo.svg/512px-Malta_Air_logo.svg.png",
-            };
+        <div class="flex items-center justify-center gap-3 text-[13px] font-light text-white/50 mb-10">
+            <div id="current-time">Current Time: --:--</div>
+            <div class="opacity-30">•</div>
+            <div id="flight-count">Showing 0 flights</div>
+        </div>
 
-            const days = ["Wszystkie dni", "Niedziela", "Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota"];
+        <div id="flights-container" class="w-full flex flex-col items-center gap-4"></div>
+    </div>
 
-            useEffect(() => {
-                const saved = localStorage.getItem("ryanair-data");
-                if (saved) setFlights(JSON.parse(saved));
-                else setFlights([
-                    { id: 1, number: "FR7933", day: "Sobota", from: "Kraków", to: "Podgorica", departure: "15:35", arrival: "16:45", airline: "Buzz", active: true }
-                ]);
-            }, []);
+    <!-- Panel Modalny -->
+    <div id="modal-overlay" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        
+        <!-- Login - POPRAWIONY ROZMIAR -->
+        <div id="login-box" class="hidden bg-[#0C3895] border border-white/10 p-8 rounded-[32px] w-full max-w-[320px] text-center shadow-2xl">
+            <h2 class="text-xl font-medium mb-6">Administrator</h2>
+            <input type="password" id="admin-pass" placeholder="Password" class="w-full mb-4 text-center">
+            <button onclick="checkLogin()" class="w-full bg-[#f7e300] text-blue-900 font-semibold py-3 rounded-xl transition active:scale-95">Zaloguj</button>
+            <button onclick="closeModal()" class="mt-4 text-white/40 text-sm hover:text-white transition">Zamknij</button>
+        </div>
 
-            useEffect(() => {
-                localStorage.setItem("ryanair-data", JSON.stringify(flights));
-            }, [flights]);
+        <!-- Panel Zarządzania -->
+        <div id="admin-box" class="hidden bg-[#0C3895] border border-white/10 p-8 rounded-[32px] w-full max-w-2xl overflow-y-auto max-h-[90vh]">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="form-title" class="text-xl font-medium">Zarządzanie lotami</h2>
+                <button onclick="closeModal()" class="text-white/40 hover:text-white">✕</button>
+            </div>
 
-            const addFlight = (e) => {
-                e.preventDefault();
-                const fd = new FormData(e.target);
-                const newF = {
-                    id: Date.now(),
-                    number: fd.get("number"),
-                    day: fd.get("day"),
-                    from: fd.get("from"),
-                    to: fd.get("to"),
-                    departure: fd.get("dep"),
-                    arrival: fd.get("arr"),
-                    airline: fd.get("airline"),
-                    active: false
-                };
-                setFlights([...flights, newF]);
-                e.target.reset();
-            };
-
-            const filtered = selectedDay === "Wszystkie dni" ? flights : flights.filter(f => f.day === selectedDay);
-
-            return (
-                <div className="min-h-screen text-white p-4 md:p-10">
-                    <div className="max-w-4xl mx-auto">
-                        <header className="flex justify-between items-center mb-10 border-b border-blue-400 pb-5">
-                            <h1 className="text-3xl font-black italic">RYANAIR</h1>
-                            <nav className="flex gap-2">
-                                <button onClick={() => setPage("flights")} className={`px-4 py-2 rounded ${page === 'flights' ? 'bg-white text-blue-800' : 'bg-blue-700'}`}>LOTY</button>
-                                <button onClick={() => setPage("admin")} className={`px-4 py-2 rounded ${page === 'admin' ? 'bg-white text-blue-800' : 'bg-blue-700'}`}>ADMIN</button>
-                            </nav>
-                        </header>
-
-                        {page === "flights" ? (
-                            <section>
-                                <div className="flex flex-wrap gap-2 mb-8 justify-center">
-                                    {days.map(d => (
-                                        <button key={d} onClick={() => setSelectedDay(d)} className={`px-3 py-1 rounded-full text-sm ${selectedDay === d ? 'bg-yellow-400 text-black' : 'bg-blue-800'}`}>{d}</button>
-                                    ))}
-                                </div>
-                                <div className="grid gap-4">
-                                    {filtered.map(f => (
-                                        <div key={f.id} className={`p-6 rounded-xl border-2 ${f.active ? 'border-green-400 bg-blue-600' : 'border-blue-400 bg-blue-900'}`}>
-                                            <div className="flex justify-between items-center">
-                                                <div>
-                                                    <div className="text-2xl font-black">{f.number}</div>
-                                                    <div className="text-sm opacity-70">{f.from} → {f.to}</div>
-                                                </div>
-                                                <div className="text-right">
-                                                    <div className="text-xl font-bold">{f.departure}</div>
-                                                    <div className="text-xs opacity-60 uppercase">{f.day}</div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </section>
-                        ) : (
-                            <section className="max-w-md mx-auto">
-                                {!logged ? (
-                                    <div className="bg-blue-900 p-6 rounded-xl border border-blue-400">
-                                        <input type="password" placeholder="Hasło" className="w-full p-2 mb-4 bg-blue-950 border border-blue-400 rounded" onChange={e => setPassword(e.target.value)} />
-                                        <button onClick={() => password === ADMIN_PASSWORD ? setLogged(true) : alert("Złe hasło")} className="w-full bg-yellow-400 text-black font-bold py-2 rounded">ZALOGUJ</button>
-                                    </div>
-                                ) : (
-                                    <form onSubmit={addFlight} className="bg-blue-900 p-6 rounded-xl border border-blue-400 space-y-3">
-                                        <input name="number" placeholder="Numer lotu" className="w-full p-2 bg-blue-950 rounded border border-blue-700" required />
-                                        <div className="grid grid-cols-2 gap-2">
-                                            <input name="from" placeholder="Z" className="p-2 bg-blue-950 rounded border border-blue-700" required />
-                                            <input name="to" placeholder="Do" className="p-2 bg-blue-950 rounded border border-blue-700" required />
-                                            <input name="dep" type="time" className="p-2 bg-blue-950 rounded border border-blue-700" required />
-                                            <input name="arr" type="time" className="p-2 bg-blue-950 rounded border border-blue-700" required />
-                                        </div>
-                                        <select name="day" className="w-full p-2 bg-blue-950 rounded border border-blue-700">
-                                            {days.slice(1).map(d => <option key={d}>{d}</option>)}
-                                        </select>
-                                        <select name="airline" className="w-full p-2 bg-blue-950 rounded border border-blue-700">
-                                            <option>Ryanair</option><option>Buzz</option><option>Malta</option>
-                                        </select>
-                                        <button type="submit" className="w-full bg-green-500 py-2 rounded font-bold uppercase">Dodaj lot</button>
-                                        <div className="mt-4 border-t border-blue-700 pt-4">
-                                            {flights.map(f => (
-                                                <div key={f.id} className="flex justify-between text-xs mb-2">
-                                                    <span>{f.number}</span>
-                                                    <button type="button" onClick={() => setFlights(flights.filter(x => x.id !== f.id))} className="text-red-400">Usuń</button>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </form>
-                                )}
-                            </section>
-                        )}
-                    </div>
+            <form id="flight-form" class="grid grid-cols-2 gap-3 mb-8 pb-8 border-b border-white/10">
+                <input type="hidden" id="edit-id">
+                <input type="text" id="f-num" placeholder="Numer lotu (np. FR1681)" class="col-span-2" required>
+                <select id="f-day">
+                    <option>Monday</option><option>Tuesday</option><option>Wednesday</option>
+                    <option>Thursday</option><option>Friday</option><option>Saturday</option><option>Sunday</option>
+                </select>
+                <select id="f-operator">
+                    <option value="ryanair">Ryanair</option>
+                    <option value="malta">Malta Air</option>
+                    <option value="buzz">Buzz</option>
+                    <option value="lauda">Lauda Europe</option>
+                </select>
+                <input type="text" id="f-from" placeholder="From (Barcelona)" required>
+                <input type="text" id="f-to" placeholder="To (Frankfurt Hahn)" required>
+                <input type="text" id="f-dep" placeholder="Wylot (17:35)" required>
+                <input type="text" id="f-arr" placeholder="Przylot (18:45)" required>
+                <input type="text" id="f-dur" placeholder="Czas trwania (1hr 10min)" class="col-span-2">
+                
+                <div class="col-span-2 flex items-center gap-3 py-2 px-1">
+                    <input type="checkbox" id="f-manual-fly" class="w-4 h-4">
+                    <label for="f-manual-fly" class="text-sm font-light">Wymuś status "Flying Now"</label>
                 </div>
-            );
+                
+                <button type="submit" id="save-btn" class="col-span-2 bg-green-500 text-white font-medium py-3 rounded-xl hover:bg-green-600 transition">Dodaj / Zapisz lot</button>
+            </form>
+
+            <h3 class="text-sm font-light text-white/40 mb-4 tracking-widest">Lista aktywnych lotów</h3>
+            <div id="admin-flight-list" class="space-y-2"></div>
+        </div>
+    </div>
+
+    <script>
+        let flights = JSON.parse(localStorage.getItem('ryanair_v6')) || [];
+        let currentFilter = 'All';
+        const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+        const operatorLogos = {
+            'ryanair': 'https://upload.wikimedia.org/wikipedia/en/thumb/a/ae/Ryanair_Logo.svg/1200px-Ryanair_Logo.svg.png',
+            'buzz': 'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Buzz_Logo.svg/1200px-Buzz_Logo.svg.png',
+            'malta': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Malta_Air_logo.svg/1280px-Malta_Air_logo.svg.png',
+            'lauda': 'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Lauda_Europe_logo.svg/1280px-Lauda_Europe_logo.svg.png'
+        };
+
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('pl-PL', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Warsaw' });
+            document.getElementById('current-time').innerText = `Current Time: ${time}`;
+            renderFlights();
+        }
+        setInterval(updateTime, 10000);
+        updateTime();
+
+        function renderFilters() {
+            const container = document.getElementById('day-filters');
+            container.innerHTML = ['All Days', ...days].map(d => `
+                <button onclick="setFilter('${d === 'All Days' ? 'All' : d}')" 
+                        class="filter-btn px-5 py-1.5 rounded-full text-[13px] ${ (currentFilter === 'All' && d === 'All Days') || currentFilter === d ? 'active' : ''}">
+                    ${d}
+                </button>
+            `).join('');
         }
 
-        ReactDOM.createRoot(document.getElementById('root')).render(<RyanairSystem />);
+        function setFilter(d) { currentFilter = d; renderFilters(); renderFlights(); }
+
+        function renderFlights() {
+            const container = document.getElementById('flights-container');
+            const filtered = currentFilter === 'All' ? flights : flights.filter(f => f.day === currentFilter);
+            document.getElementById('flight-count').innerText = `Showing ${filtered.length} flights`;
+
+            container.innerHTML = filtered.map(f => {
+                const now = new Date();
+                const curDay = days[now.getDay()];
+                const curH = now.getHours().toString().padStart(2, '0') + ":" + now.getMinutes().toString().padStart(2, '0');
+                const isFlying = f.manualFly || (f.day === curDay && curH >= f.dep && curH <= f.arr);
+                
+                const logoUrl = operatorLogos[f.operator] || operatorLogos['ryanair'];
+
+                return `
+                <div class="flight-card w-full p-6 relative ${isFlying ? 'is-flying' : ''}">
+                    <div class="absolute top-6 right-32 flex items-center gap-3">
+                        ${isFlying ? '<span class="flex items-center gap-1.5 text-[10px] font-semibold text-emerald-400 bg-emerald-400/10 px-2.5 py-1 rounded-full"><span class="w-1.5 h-1.5 bg-emerald-400 rounded-full animate-pulse"></span>Flying Now</span>' : ''}
+                    </div>
+
+                    <div class="absolute top-6 right-8">
+                        <img src="${logoUrl}" class="airline-logo" alt="${f.operator}">
+                    </div>
+                    
+                    <div class="flex justify-between items-start mb-6">
+                        <div>
+                            <h2 class="text-3xl font-semibold mb-0.5 tracking-tight">${f.number}</h2>
+                            <p class="text-white/40 text-[13px] font-light">${f.day}</p>
+                        </div>
+                        <div class="text-right">
+                            <h3 class="text-[22px] font-medium">${f.dep} BST</h3>
+                            <p class="text-white/30 text-[10px] font-light mt-0.5 tracking-wider">${f.dur}</p>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center mb-8">
+                        <div class="flex-1">
+                            <p class="text-[10px] font-light text-white/30 mb-0.5">From</p>
+                            <p class="text-[17px] font-normal tracking-tight">${f.from}</p>
+                        </div>
+                        <div class="px-6 opacity-20 text-xl font-thin">→</div>
+                        <div class="flex-1 text-right">
+                            <p class="text-[10px] font-light text-white/30 mb-0.5">To</p>
+                            <p class="text-[17px] font-normal tracking-tight">${f.to}</p>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-white/5 flex justify-between text-[11px] font-light text-white/40">
+                        <span>Operated by <span class="text-white/70 capitalize">${f.operator}</span></span>
+                        <span>Departure: ${f.dep} | Arrival: ${f.arr}</span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+            
+            updateAdminFlightList();
+        }
+
+        function openLogin() {
+            document.getElementById('modal-overlay').classList.remove('hidden');
+            document.getElementById('login-box').classList.remove('hidden');
+        }
+
+        function checkLogin() {
+            if(document.getElementById('admin-pass').value === 'admin123') {
+                document.getElementById('login-box').classList.add('hidden');
+                document.getElementById('admin-box').classList.remove('hidden');
+                renderFlights();
+            } else { alert("Wrong password"); }
+        }
+
+        function closeModal() {
+            document.getElementById('modal-overlay').classList.add('hidden');
+            document.getElementById('login-box').classList.add('hidden');
+            document.getElementById('admin-box').classList.add('hidden');
+            resetForm();
+        }
+
+        function resetForm() {
+            document.getElementById('flight-form').reset();
+            document.getElementById('edit-id').value = "";
+            document.getElementById('save-btn').innerText = "Dodaj / Zapisz lot";
+        }
+
+        document.getElementById('flight-form').onsubmit = function(e) {
+            e.preventDefault();
+            const id = document.getElementById('edit-id').value || Date.now().toString();
+            const data = {
+                id,
+                number: document.getElementById('f-num').value,
+                day: document.getElementById('f-day').value,
+                operator: document.getElementById('f-operator').value,
+                from: document.getElementById('f-from').value,
+                to: document.getElementById('f-to').value,
+                dep: document.getElementById('f-dep').value,
+                arr: document.getElementById('f-arr').value,
+                dur: document.getElementById('f-dur').value || "1hr 10min",
+                manualFly: document.getElementById('f-manual-fly').checked
+            };
+
+            const idx = flights.findIndex(f => f.id === id);
+            if(idx > -1) flights[idx] = data;
+            else flights.push(data);
+
+            localStorage.setItem('ryanair_v6', JSON.stringify(flights));
+            resetForm();
+            renderFlights();
+        };
+
+        function updateAdminFlightList() {
+            const list = document.getElementById('admin-flight-list');
+            list.innerHTML = flights.map(f => `
+                <div class="flex justify-between items-center bg-white/5 p-3 rounded-xl border border-white/5">
+                    <span class="text-sm font-light">${f.number} <span class="opacity-30">(${f.from} ➔ ${f.to})</span></span>
+                    <div class="flex gap-4 text-[11px] font-medium">
+                        <button onclick="fillEdit('${f.id}')" class="text-yellow-400">Edytuj</button>
+                        <button onclick="deleteFlight('${f.id}')" class="text-red-400">Usuń</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function fillEdit(id) {
+            const f = flights.find(x => x.id === id);
+            document.getElementById('edit-id').value = f.id;
+            document.getElementById('f-num').value = f.number;
+            document.getElementById('f-day').value = f.day;
+            document.getElementById('f-operator').value = f.operator;
+            document.getElementById('f-from').value = f.from;
+            document.getElementById('f-to').value = f.to;
+            document.getElementById('f-dep').value = f.dep;
+            document.getElementById('f-arr').value = f.arr;
+            document.getElementById('f-dur').value = f.dur;
+            document.getElementById('f-manual-fly').checked = f.manualFly;
+            document.getElementById('save-btn').innerText = "Zaktualizuj dane lotu";
+            document.getElementById('admin-box').scrollTop = 0;
+        }
+
+        function deleteFlight(id) {
+            if(confirm("Confirm delete?")) {
+                flights = flights.filter(f => f.id !== id);
+                localStorage.setItem('ryanair_v6', JSON.stringify(flights));
+                renderFlights();
+            }
+        }
+
+        renderFilters();
+        renderFlights();
     </script>
 </body>
 </html>
